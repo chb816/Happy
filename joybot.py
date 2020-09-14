@@ -108,10 +108,11 @@ async def cmd_add(ctx, arg) :
             conn.commit()
             conn.close()
 
-
     except AttributeError :
         pass 
 
-
+@bot.event
+async def on_message(ctx) :
+    await print(ctx)
 
 bot.run(token)
