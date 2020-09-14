@@ -62,7 +62,53 @@ async def hey(ctx, arg):
     else :
         await ctx.send("묵 찌 빠 중에서 입력해 주세요")
 
+@bot.command(name="삭제")
+async def cmd_delete(ctx) :
+    conn = pymysql.connect(happyhost, user='TT', password=dbpsw, db='Happy' ,charset = 'utf8')
+    try:
+        curs = conn.cursor()
+        sql = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'Happy'"
+        curs.execute(sql)
+        guild_cmd_table_id = str(curs.fetchall())
+        conn.commit() 
+    finally:
+        conn.close()
 
+    await ctx.send("명령어를 입력해 주세요.")
+    
+    def delete_check(m) :
+        return m.content and m.author == ctx.author
+
+    del_cmd = await bot.wait_for('ctx', check=delete_check)
+    db_del_cmd = str("{ctx}".format(del_cmd))
+    try:
+        guild_table_id = str(ctx.guild.id)
+        if guild_table_id in guild_cmd_table_id :
+            db_table_name = str("a_"+guild_table_id)
+
+        qwer = pymysql.connect(happyhost, user='TT', password=dbpsw,db='Happy' ,charset = 'utf8')
+        try:
+            cursor = qwer.cursor(pymysql.cursors.DictCursor)
+            sql1 = "select * from "+db_table_name+""
+            cursor.execute(sql1)
+            result = cursor.fetchall()
+        finally:
+            qwer.close()
+        
+        for i in result :
+            if ctx.content == i.get('cmd')  :
+                
+                conn = pymysql.connect(happyhost, user='TT', password=dbpsw,db='Happy' ,charset = 'utf8')
+                curs = conn.cursor()
+                sql = "delete from "+db_table_name+" where cmd = '"+ctx.content+"'"
+                curs.execute(sql)
+                conn.commit()
+                conn.close()
+                await ctx.send(str(ctx.content) + "명령어가 삭제되었습니다.")
+                break
+
+    except AttributeError:
+        pass
 
 @bot.command(name="역할확인")
 async def role_check(ctx, *, role : discord.role) :
@@ -70,7 +116,7 @@ async def role_check(ctx, *, role : discord.role) :
     print(roles)
 
 @bot.command(name="추가")
-async def cmd_add(ctx, arg) :
+async def cmd_add(ctx) :
     conn = pymysql.connect(happyhost, user='TT', password=dbpsw, db='Happy' ,charset = 'utf8')
     try:
         curs = conn.cursor()
@@ -113,6 +159,49 @@ async def cmd_add(ctx, arg) :
 
 @bot.event
 async def on_message(ctx) :
-    await print(ctx)
+    if ctx.author.bot :
+        return None
+
+    conn = pymysql.connect(happyhost, user='TT', password=dbpsw, db='Happy' ,charset = 'utf8')
+    try:
+        curs = conn.cursor()
+        sql = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'Happy'"
+        curs.execute(sql)
+        guild_cmd_table_id = str(curs.fetchall())
+        conn.commit() 
+    finally:
+        conn.close()
+
+    guild_table_id = str(ctx.guild.id)
+    if guild_table_id in guild_cmd_table_id :
+        db_table_name = str("a_"+guild_table_id)
+
+        qwer = pymysql.connect(happyhost, user='TT', password=dbpsw,db='Happy' ,charset = 'utf8')
+        try:
+            cursor = qwer.cursor(pymysql.cursors.DictCursor)
+            sql1 = "select * from "+db_table_name+""
+            cursor.execute(sql1)
+            result = cursor.fetchall()
+        finally:
+            qwer.close()
+        
+        for i in result :
+            if ctx.content == i.get('cmd') :
+                guild_emoji = i.get('emoji')
+                if 'https' in guild_emoji :
+                    embed = discord.Embed()
+                    embed.set_image(url=guild_emoji)
+                    await ctx.channel.send(embed)
+                    break
+                
+                if 'http' in guild_emoji  :
+                    embed = discord.Embed()
+                    embed.set_image(url=guild_emoji)
+                    await ctx.channel.send(embed)
+                    break
+                await ctx.channel.send(guild_emoji)
+
+
+    
 
 bot.run(token)
