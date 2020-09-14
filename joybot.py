@@ -76,13 +76,38 @@ async def cmd_add(ctx, arg) :
         curs = conn.cursor()
         sql = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'Happy'"
         curs.execute(sql)
-        guild_cmd_table_name = str(curs.fetchall())
+        guild_cmd_table_id = str(curs.fetchall())
         conn.commit() 
     finally:
         conn.close()
     
     try :
-        print("qwer")
+        guild_table_id = str(ctx.guild.id)
+        if guild_table_id in guild_cmd_table_id :
+            db_table_name = str("a_"+guild_table_id)
+            await ctx.send("명령어를 입력해 주세요")
+            
+            def cmd_check(m):
+                return m.content and  m.author == ctx.author
+
+            guild_cmd = await bot.wait_for('arg', check=cmd_check)
+            str_guild_cmd = str("{arg}".format(guild_cmd))
+            
+            await ctx.send("컨텐츠를 입력해 주세요")
+            
+            def content_check(m):
+                return m.content and m.author == ctx.author
+            
+            guild_content = await  bot.wait_for('arg', check=content_check)
+            str_guild_content =  str("{arg}".format(guild_content))
+
+            conn = pymysql.connect(happyhost, user='TT', password=dbpsw,db='Happy' ,charset = 'utf8')
+            curs = conn.cursor()
+            sql = "INSERT into "+db_table_name+"(cmd, emoji) value (%s, %s)"
+            curs.execute(sql, (str_guild_cmd, str_guild_content))
+            conn.commit()
+            conn.close()
+
 
     except AttributeError :
         pass 
