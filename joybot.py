@@ -157,6 +157,55 @@ async def cmd_add(ctx) :
     except AttributeError :
         pass 
 
+@bot.command(name="명령어 확인")
+async def  cmd_list(ctx) :
+    conn = pymysql.connect(happyhost, user='TT', password=dbpsw, db='Happy' ,charset = 'utf8')
+    try:
+        curs = conn.cursor()
+        sql = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'Happy'"
+        curs.execute(sql)
+        guild_cmd_table_id = str(curs.fetchall())
+        conn.commit() 
+    finally:
+        conn.close()
+    guild_table_id = str(ctx.guild.id)
+    if guild_table_id == guild_cmd_table_id :
+        db_table_name = str("a_"+guild_table_id)
+        qwer = pymysql.connect(happyhost, user='TT', password=dbpsw,db='Happy' ,charset = 'utf8')
+        try:
+            cursor = qwer.cursor()
+            sql1 = "select cmd from "+db_table_name+""
+            cursor.execute(sql1)
+            result = cursor.fetchall()
+        finally:
+            qwer.close()
+        
+        cmd_len = len(result)
+        cmd_page = cmd_len // 10
+        page = []
+        if cmd_page >= 1 :
+            i = 0
+            while(i<cmd_page):
+                page.append(result[i:i*10])
+                i += 1
+            
+        cmd_list_embed = discord.Embed()
+        cmd_list_embed.add_field(name="명령어 목록", value=page[0]) 
+        qwer = await ctx.send(embed=  cmd_list_embed)
+
+        def reaction_check(reaction) :
+            return reaction.emoji
+        
+        check_reaction = await bot.wait_for('reaction', check=reaction_check)
+        emoji = str("{emoji}".format(check_reaction))
+        for i in page :
+            if emoji == '👍' :
+                cmd_list_embed_page = discord.Embed()
+                cmd_list_embed_page.add_field(name="명령어 목록", value=i)
+                await qwer.edit(embed = cmd_list_embed_page)
+        
+
+
 @bot.event
 async def on_message(ctx) :
     if ctx.author.bot :
