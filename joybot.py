@@ -13,6 +13,8 @@ bot = commands.Bot(command_prefix='$')
 token = joybot_private.token
 happyhost = joybot_private.happyhost
 dbpsw = joybot_private.dbpsw
+
+client =  discord.Client()
 @bot.event
 async def on_ready():
     print("================")
@@ -79,8 +81,8 @@ async def cmd_delete(ctx) :
     def delete_check(m) :
         return m.content and m.author == ctx.author
 
-    del_cmd = await bot.wait_for('ctx', check=delete_check)
-    db_del_cmd = str("{ctx}".format(del_cmd))
+    del_cmd = await bot.wait_for('message', check=delete_check)
+    db_del_cmd = str("{.message}".format(del_cmd))
     try:
         guild_table_id = str(ctx.guild.id)
         if guild_table_id in guild_cmd_table_id :
@@ -100,11 +102,11 @@ async def cmd_delete(ctx) :
                 
                 conn = pymysql.connect(happyhost, user='TT', password=dbpsw,db='Happy' ,charset = 'utf8')
                 curs = conn.cursor()
-                sql = "delete from "+db_table_name+" where cmd = '"+ctx.content+"'"
+                sql = "delete from "+db_table_name+" where cmd = '"+db_del_cmd+"'"
                 curs.execute(sql)
                 conn.commit()
                 conn.close()
-                await ctx.send(str(ctx.content) + "명령어가 삭제되었습니다.")
+                await ctx.send(db_del_cmd + "명령어가 삭제되었습니다.")
                 break
 
     except AttributeError:
@@ -136,16 +138,16 @@ async def cmd_add(ctx) :
             def cmd_check(m):
                 return m.content and  m.author == ctx.author
 
-            guild_cmd = await bot.wait_for('arg', check=cmd_check)
-            str_guild_cmd = str("{arg}".format(guild_cmd))
+            guild_cmd = await bot.wait_for('message', check=cmd_check)
+            str_guild_cmd = str("{.content}".format(guild_cmd))
             
             await ctx.send("컨텐츠를 입력해 주세요")
             
             def content_check(m):
                 return m.content and m.author == ctx.author
             
-            guild_content = await  bot.wait_for('arg', check=content_check)
-            str_guild_content =  str("{arg}".format(guild_content))
+            guild_content = await  bot.wait_for('message', check=content_check)
+            str_guild_content =  str("{.content}".format(guild_content))
 
             conn = pymysql.connect(happyhost, user='TT', password=dbpsw,db='Happy' ,charset = 'utf8')
             curs = conn.cursor()
@@ -154,11 +156,13 @@ async def cmd_add(ctx) :
             conn.commit()
             conn.close()
 
+            await ctx.send(str_guild_cmd+"가 추가되었습니다.")
     except AttributeError :
         pass 
 
-@bot.command(name="명령어 확인")
-async def  cmd_list(ctx) :
+@bot.command(name="명령어확인")
+async def cmd_list(ctx) :
+    print("qwer")
     conn = pymysql.connect(happyhost, user='TT', password=dbpsw, db='Happy' ,charset = 'utf8')
     try:
         curs = conn.cursor()
@@ -168,9 +172,11 @@ async def  cmd_list(ctx) :
         conn.commit() 
     finally:
         conn.close()
+
     guild_table_id = str(ctx.guild.id)
-    if guild_table_id == guild_cmd_table_id :
+    if guild_table_id in guild_cmd_table_id :
         db_table_name = str("a_"+guild_table_id)
+        
         qwer = pymysql.connect(happyhost, user='TT', password=dbpsw,db='Happy' ,charset = 'utf8')
         try:
             cursor = qwer.cursor()
@@ -181,14 +187,17 @@ async def  cmd_list(ctx) :
             qwer.close()
         
         cmd_len = len(result)
-        cmd_page = cmd_len // 10
+        cmd_page =int(cmd_len // 10)
         page = []
-        if cmd_page >= 1 :
+        print(cmd_page)
+        if cmd_page > 1 :
             i = 0
             while(i<cmd_page):
                 page.append(result[i:i*10])
                 i += 1
-            
+        else :
+            page.append(result)
+
         cmd_list_embed = discord.Embed()
         cmd_list_embed.add_field(name="명령어 목록", value=page[0]) 
         qwer = await ctx.send(embed=  cmd_list_embed)
@@ -204,11 +213,8 @@ async def  cmd_list(ctx) :
                 cmd_list_embed_page.add_field(name="명령어 목록", value=i)
                 await qwer.edit(embed = cmd_list_embed_page)
         
-
-
-@bot.event
-async def on_message(ctx) :
-    if ctx.author.bot :
+async def um_message(message) :
+    if message.author.bot :
         return None
 
     conn = pymysql.connect(happyhost, user='TT', password=dbpsw, db='Happy' ,charset = 'utf8')
@@ -221,7 +227,7 @@ async def on_message(ctx) :
     finally:
         conn.close()
 
-    guild_table_id = str(ctx.guild.id)
+    guild_table_id = str(message.guild.id)
     if guild_table_id in guild_cmd_table_id :
         db_table_name = str("a_"+guild_table_id)
 
@@ -235,22 +241,22 @@ async def on_message(ctx) :
             qwer.close()
         
         for i in result :
-            if ctx.content == i.get('cmd') :
+            if message.content == i.get('cmd') :
                 guild_emoji = i.get('emoji')
                 if 'https' in guild_emoji :
                     embed = discord.Embed()
                     embed.set_image(url=guild_emoji)
-                    await ctx.channel.send(embed)
+                    await message.channel.send(embed)
                     break
                 
                 if 'http' in guild_emoji  :
                     embed = discord.Embed()
                     embed.set_image(url=guild_emoji)
-                    await ctx.channel.send(embed)
+                    await message.channel.send(embed)
                     break
-                await ctx.channel.send(guild_emoji)
+                await message.channel.send(guild_emoji)
 
-
+bot.add_listener(um_message,'on_message')
     
 
 bot.run(token)
