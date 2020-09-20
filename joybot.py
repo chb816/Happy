@@ -10,7 +10,7 @@ import joybot_private
 
 bot = commands.Bot(command_prefix='$')
 
-token = joybot_private.token
+token = joybot_private.joytoken
 happyhost = joybot_private.happyhost
 dbpsw = joybot_private.dbpsw
 
@@ -112,10 +112,24 @@ async def cmd_delete(ctx) :
     except AttributeError:
         pass
 
-@bot.command(name="역할확인")
-async def role_check(ctx, *, role : discord.role) :
-    roles = await ctx.id
-    print(roles)
+@bot.command(name="늒네")
+async def role_check(ctx) :
+    nu_join = ctx.author.joined_at
+    nu_now = ctx.message.created_at
+    nu_time = nu_now - nu_join
+    #nu_roles = discord.utils.get(ctx.author.guild.roles, name="뉴비")
+    nu_has_role = ctx.author.roles
+    print(nu_has_role)
+    for i in nu_has_role :
+        if i.name == '뉴비' and nu_time > datetime.timedelta(days=3) :
+            print("qwer")
+            print(nu_has_role)
+            await ctx.author.remove_roles(i)
+            break
+    if nu_time >datetime.timedelta(days=30) :
+        await ctx.send("뉴비가 아니시네요")
+
+
 
 @bot.command(name="추가")
 async def cmd_add(ctx) :
@@ -246,14 +260,15 @@ async def um_message(message) :
                 if 'https' in guild_emoji :
                     embed = discord.Embed()
                     embed.set_image(url=guild_emoji)
-                    await message.channel.send(embed)
+                    await message.channel.send(embed=embed)
                     break
                 
                 if 'http' in guild_emoji  :
                     embed = discord.Embed()
                     embed.set_image(url=guild_emoji)
-                    await message.channel.send(embed)
+                    await message.channel.send(embed=embed)
                     break
+
                 await message.channel.send(guild_emoji)
 
 bot.add_listener(um_message,'on_message')
