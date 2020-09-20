@@ -175,6 +175,7 @@ async def cmd_add(ctx) :
 @bot.command(name="명령어확인")
 async def cmd_list(ctx) :
     print("qwer")
+    await ctx.send("👍이모지를 달면 다음페이지를 확인할수 있어요")
     conn = pymysql.connect(happyhost, user='TT', password=dbpsw, db='Happy' ,charset = 'utf8')
     try:
         curs = conn.cursor()
@@ -205,25 +206,36 @@ async def cmd_list(ctx) :
         if cmd_page > 1 :
             i = 0
             while(i<cmd_page):
-                page.append(result[i:i*10])
+                page.append(result[i*10:(i*10)+9])
                 i += 1
+            page.append(result[i:])
         else :
             page.append(result)
+
 
         cmd_list_embed = discord.Embed()
         cmd_list_embed.add_field(name="명령어 목록", value=page[0]) 
         qwer = await ctx.send(embed=  cmd_list_embed)
 
-        def reaction_check(reaction) :
-            return reaction.emoji
-        
-        check_reaction = await bot.wait_for('reaction', check=reaction_check)
-        emoji = str("{emoji}".format(check_reaction))
+        def reaction_check(reaction, user) :
+            return str(reaction.emoji) == '👍' and user ==  ctx.author
+
         for i in page :
-            if emoji == '👍' :
+            try:
+                check_reaction = await bot.wait_for('reaction_add',timeout=20 ,check=reaction_check) 
+
+            except asyncio.TimeoutError:
+                print("세션종료")
+                break
+            
+            emoji = str("{0}".format(check_reaction))
+            
+            if '👍' in emoji:
                 cmd_list_embed_page = discord.Embed()
                 cmd_list_embed_page.add_field(name="명령어 목록", value=i)
                 await qwer.edit(embed = cmd_list_embed_page)
+                await qwer.clear_reactions()
+            
         
 async def um_message(message) :
     if message.author.bot :
