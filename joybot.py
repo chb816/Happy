@@ -21,7 +21,7 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print("================")
-
+#실험용 가위바위보 기능
 @bot.command(name="가위바위보")
 async def hey(ctx, arg):
     handlist = [1,2,3] #1 : 가위 2: 주먹 3:보
@@ -63,7 +63,7 @@ async def hey(ctx, arg):
             await ctx.send(ctx.author.name + "님과 비겼습니다.")
     else :
         await ctx.send("묵 찌 빠 중에서 입력해 주세요")
-
+#커스텀명령어 삭제 명령어
 @bot.command(name="삭제")
 async def cmd_delete(ctx) :
     conn = pymysql.connect(happyhost, user='TT', password=dbpsw, db='Happy' ,charset = 'utf8')
@@ -77,7 +77,7 @@ async def cmd_delete(ctx) :
         conn.close()
 
     await ctx.send("명령어를 입력해 주세요.")
-    
+    #입력 대기
     def delete_check(m) :
         return m.content and m.author == ctx.author
 
@@ -111,28 +111,26 @@ async def cmd_delete(ctx) :
 
     except AttributeError:
         pass
-
+#뉴비 역할 떼는 기능
 @bot.command(name="늒네")
 async def role_check(ctx) :
-    nu_join = ctx.author.joined_at
+    nu_join = ctx.author.joined_at 
     nu_now = ctx.message.created_at
     nu_time = nu_now - nu_join
-    #nu_roles = discord.utils.get(ctx.author.guild.roles, name="뉴비")
     nu_has_role = ctx.author.roles
-    print(nu_has_role)
+    #ctx가 약간 discord 클래스 느낌
     for i in nu_has_role :
-        if i.name == '뉴비' and nu_time > datetime.timedelta(days=3) :
-            print("qwer")
-            print(nu_has_role)
+        if i.name == '뉴비' and nu_time > datetime.timedelta(days=10) :
             await ctx.author.remove_roles(i)
             break
     if nu_time >datetime.timedelta(days=30) :
         await ctx.send("뉴비가 아니시네요")
 
 
-
+#커스텀명령어 추가기능
 @bot.command(name="추가")
 async def cmd_add(ctx) :
+    #DB연결
     conn = pymysql.connect(happyhost, user='TT', password=dbpsw, db='Happy' ,charset = 'utf8')
     try:
         curs = conn.cursor()
@@ -173,7 +171,7 @@ async def cmd_add(ctx) :
             await ctx.send(str_guild_cmd+"가 추가되었습니다.")
     except AttributeError :
         pass 
-
+#명령어 확인  기능
 @bot.command(name="명령어확인")
 async def cmd_list(ctx) :
     print("qwer")
@@ -186,7 +184,7 @@ async def cmd_list(ctx) :
         conn.commit() 
     finally:
         conn.close()
-
+    #명령어 테이블 서버이름과 입력중인 서버이름 비교
     guild_table_id = str(ctx.guild.id)
     if guild_table_id in guild_cmd_table_id :
         db_table_name = str("a_"+guild_table_id)
