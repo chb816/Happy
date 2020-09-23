@@ -82,32 +82,32 @@ async def cmd_delete(ctx) :
         return m.content and m.author == ctx.author
 
     del_cmd = await bot.wait_for('message', check=delete_check)
-    db_del_cmd = str("{.message}".format(del_cmd))
+    db_del_cmd = str("{.content}".format(del_cmd))
     try:
         guild_table_id = str(ctx.guild.id)
         if guild_table_id in guild_cmd_table_id :
             db_table_name = str("a_"+guild_table_id)
 
-        qwer = pymysql.connect(happyhost, user='TT', password=dbpsw,db='Happy' ,charset = 'utf8')
-        try:
-            cursor = qwer.cursor(pymysql.cursors.DictCursor)
-            sql1 = "select * from "+db_table_name+""
-            cursor.execute(sql1)
-            result = cursor.fetchall()
-        finally:
-            qwer.close()
+            qwer = pymysql.connect(happyhost, user='TT', password=dbpsw,db='Happy' ,charset = 'utf8')
+            try:
+                cursor = qwer.cursor(pymysql.cursors.DictCursor)
+                sql1 = "select * from "+db_table_name+""
+                cursor.execute(sql1)
+                result = cursor.fetchall()
+            finally:
+                qwer.close()
         
-        for i in result :
-            if ctx.content == i.get('cmd')  :
+            for i in result :
+                if db_del_cmd == i.get('cmd')  :
                 
-                conn = pymysql.connect(happyhost, user='TT', password=dbpsw,db='Happy' ,charset = 'utf8')
-                curs = conn.cursor()
-                sql = "delete from "+db_table_name+" where cmd = '"+db_del_cmd+"'"
-                curs.execute(sql)
-                conn.commit()
-                conn.close()
-                await ctx.send(db_del_cmd + "명령어가 삭제되었습니다.")
-                break
+                    conn = pymysql.connect(happyhost, user='TT', password=dbpsw,db='Happy' ,charset = 'utf8')
+                    curs = conn.cursor()
+                    sql = "delete from "+db_table_name+" where cmd = '"+db_del_cmd+"'"
+                    curs.execute(sql)
+                    conn.commit()
+                    conn.close()
+                    await ctx.send(db_del_cmd + "명령어가 삭제되었습니다.")
+                    break
 
     except AttributeError:
         pass
