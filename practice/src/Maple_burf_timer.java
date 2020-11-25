@@ -18,11 +18,8 @@ class skil_info extends User_info{
     } 
 
     public int buff_calc(){
-        return (super.buff_time_influ * this.skil_time) / 100;
+        return ((super.buff_time_influ * this.skil_time) / 100)+ this.skil_time ;
     }
-
-
-
 }
 class ssle_skil {
     String ssle_name;
